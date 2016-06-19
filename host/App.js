@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
+import ActionDispatcher from 'components/ActionDispatcher'
+import MessageSender from 'components/MessageSender'
+import ModeButtons from './ModeButtons'
+
 const mapStateToProps = ({}) => ({
 })
 
@@ -11,11 +15,17 @@ class App extends Component {
   }
 
   componentDidMount() {
+    sendData("fetch_contents")
   }
 
   render() {
-    return <div>
-    </div>
+    return (
+      <div>
+        <ModeButtons />
+        <ActionDispatcher />
+        <MessageSender />
+      </div>
+    )
   }
 }
 

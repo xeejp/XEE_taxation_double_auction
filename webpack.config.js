@@ -1,4 +1,7 @@
+var path = require('path');
+
 module.exports = {
+  devtool: 'inline-source-map',
   entry: {
     host: ["babel-polyfill", "./host/index.js"],
     participant: ["babel-polyfill", "./participant/index.js"],
@@ -15,6 +18,9 @@ module.exports = {
     }]
   },
   resolve: {
+    root: [
+      path.resolve('./')
+    ],
     extensions: [
       "", ".js"
     ],
