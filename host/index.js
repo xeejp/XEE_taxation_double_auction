@@ -8,7 +8,7 @@ import createSagaMiddleware from 'redux-saga'
 import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin();
 
-import App from './App.js'
+import App from './App'
 
 import saga from './saga'
 import reducer from './reducer'
@@ -32,6 +32,7 @@ _experiment.onReceiveMessage(({ action }) => {
 })
 
 function sendData(action, params) {
+  console.log(action, params)
   _experiment.send_data({ action, params });
 }
 

@@ -1,10 +1,15 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
-import ActionDispatcher from 'components/ActionDispatcher'
-import MessageSender from 'components/MessageSender'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 
-const mapStateToProps = ({}) => ({
+import Auction from 'participant/Auction'
+import Wait from 'participant/Wait'
+import Description from 'participant/Description'
+import Result from 'participant/Result'
+
+const mapStateToProps = ({mode}) => ({
+  mode
 })
 
 class App extends Component {
@@ -18,13 +23,18 @@ class App extends Component {
   }
 
   render() {
+    const { mode } = this.props
     return (
-      <div>
-        <ActionDispatcher />
-        <MessageSender />
-      </div>
+      <MuiThemeProvider>
+        <div>
+          { (mode == "auction") ? <Auction /> : null }
+          { (mode == "wait") ? <Wait /> : null }
+          { (mode == "description") ? <Description /> : null }
+          { (mode == "result") ? <Result /> : null }
+        </div>
+      </MuiThemeProvider>
     )
   }
 }
 
-export default connect()(App)
+export default connect(mapStateToProps)(App)
