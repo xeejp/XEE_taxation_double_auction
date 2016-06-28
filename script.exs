@@ -1,4 +1,4 @@
-defmodule ChickenRace do
+defmodule DoubleAuctionElixir do
   use Xee.ThemeScript
   require Logger
 
