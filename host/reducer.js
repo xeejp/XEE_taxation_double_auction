@@ -28,13 +28,41 @@ const users = handleActions({
       [payload.id]: payload.user
     })
   },
-  'UPDATE_USER': (state, { payload }) => {
+  'UPDATE_USER': (state, { id, user }) => {
     return Object.assign({}, state, {
-      [payload.id]: payload.user
+      [id]: user
     })
   },
   'UPDATE_USERS': (state, { users }) => {
     return users
+  },
+  'NEW_BUYER_BIDS': (state, { money, id }) => {
+    return Object.assign({}, state, {
+      [id]: Object.assign({}, state[id], {
+        bidded: true,
+        bid: money
+      })
+    })
+  },
+  'NEW_SELLER_BIDS': (state, { money, id }) => {
+    return Object.assign({}, state, {
+      [id]: Object.assign({}, state[id], {
+        bidded: true,
+        bid: money
+      })
+    })
+  },
+  'DEALT': (state, { sellerID, buyerID, money }) => {
+    return Object.assign({}, state, {
+      [sellerID]: Object.assign({}, state[sellerID], {
+        dealt: true,
+        bid: money
+      }),
+      [buyerID]: Object.assign({}, state[buyerID], {
+        dealt: true,
+        bid: money
+      })
+    })
   }
 }, {})
 

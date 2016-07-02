@@ -2,11 +2,15 @@ import { take, put, fork, select } from 'redux-saga/effects'
 
 import { submitMode, changeMode, match, nextMode } from './actions'
 
+import { getMode } from 'util/index'
+
 function* changeModeSaga() {
   while (true) {
     const { payload } = yield take(`${submitMode}`)
-    sendData('change_mode', payload)
-    yield put(changeMode(payload))
+    if (confirm("本当に" + getMode(payload) + "モードに移行しますか？")) {
+      sendData('change_mode', payload)
+      yield put(changeMode(payload))
+    }
   }
 }
 
@@ -14,15 +18,15 @@ function* nextModeSaga() {
   const modes = ["description", "auction", "result"]
   while (true) {
     yield take(`${nextMode}`)
-    if (confirm("本当に次のモードに移行しますか？")) {
-      const mode = yield select(({ mode }) => mode)
-      for (let i = 0; i < modes.length; i ++) {
-        if (mode == modes[i]) {
-          yield put(submitMode(modes[(i + 1) % modes.length]))
-          break
-        }
+    const mode = yield select(({ mode }) => mode)
+    let next = modes[0]
+    for (let i = 0; i < modes.length; i ++) {
+      if (mode == modes[i]) {
+        next = modes[(i + 1) % modes.length]
+        break
       }
     }
+    yield put(submitMode(next))
   }
 }
 

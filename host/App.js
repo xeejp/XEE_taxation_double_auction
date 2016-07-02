@@ -8,6 +8,7 @@ import MessageSender from 'components/MessageSender'
 import ModeButtons from './ModeButtons'
 import MatchingButton from './MatchingButton'
 import BidsTable from 'components/BidsTable'
+import Users from './Users'
 
 const mapStateToProps = ({buyerBids, sellerBids, deals}) => ({
   buyerBids,
@@ -32,6 +33,7 @@ class App extends Component {
         <div>
           <ModeButtons />
           <MatchingButton />
+          <Users />
           <BidsTable
             buyerBids={buyerBids}
             sellerBids={sellerBids}

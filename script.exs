@@ -205,7 +205,8 @@ defmodule DoubleAuctionElixir do
           host_action = %{
             type: "NEW_SELLER_BIDS",
             money: bid,
-            previousBid: previous_bid
+            previousBid: previous_bid,
+            id: id
           }
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
             {p_id, %{
@@ -228,7 +229,9 @@ defmodule DoubleAuctionElixir do
           deals = [{bid, DateTime.today(), {id, seller_id}} | data.deals]
           participants = data.participants
                         |> Map.update!(id, &(Map.put(&1, :dealt, true)))
+                        |> Map.update!(id, &(Map.put(&1, :bid, bid)))
                         |> Map.update!(seller_id, &(Map.put(&1, :dealt, true)))
+                        |> Map.update!(seller_id, &(Map.put(&1, :bid, bid)))
           seller_bids = List.delete(data.seller_bids, data.lowest_bid)
           data = %{data | deals: deals, participants: participants, seller_bids: seller_bids}
           data = dealt(data, id, seller_id)
@@ -271,7 +274,8 @@ defmodule DoubleAuctionElixir do
           host_action = %{
             type: "NEW_BUYER_BIDS",
             money: bid,
-            previousBid: previous_bid
+            previousBid: previous_bid,
+            id: id
           }
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
             {p_id, %{

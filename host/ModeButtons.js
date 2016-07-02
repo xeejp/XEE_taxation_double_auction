@@ -5,6 +5,8 @@ import RaisedButton from 'material-ui/RaisedButton'
 
 import { submitMode, nextMode } from 'host/actions'
 
+import { getMode } from 'util/index'
+
 const modes = ["wait", "description", "auction", "result"]
 
 const mapStateToProps = ({ mode }) => ({
@@ -14,9 +16,7 @@ const mapStateToProps = ({ mode }) => ({
 class ModeButtons extends Component {
   changeMode(mode) {
     const { dispatch } = this.props
-    if (confirm("本当に" + mode + "モードに移行しますか？")) {
-      dispatch(submitMode(mode))
-    }
+    dispatch(submitMode(mode))
   }
 
   nextMode(mode) {
@@ -29,7 +29,7 @@ class ModeButtons extends Component {
     for (let i = 0; i < modes.length; i ++) {
       buttons[i] = (
         <RaisedButton key={i} onClick={this.changeMode.bind(this, modes[i])} secondary={modes[i] == this.props.mode }>
-          {modes[i]}
+          {getMode(modes[i])}
         </RaisedButton>
       )
     }
