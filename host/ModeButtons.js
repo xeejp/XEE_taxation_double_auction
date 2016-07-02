@@ -28,16 +28,16 @@ class ModeButtons extends Component {
     const buttons = []
     for (let i = 0; i < modes.length; i ++) {
       buttons[i] = (
-        <RaisedButton key={i} onClick={this.changeMode.bind(this, modes[i])} secondary={modes[i] == this.props.mode }>
+        <RaisedButton key={i} onClick={this.changeMode.bind(this, modes[i])} secondary={modes[i] == this.props.mode } style={{ marginRight: i == 0 ? '2%' : '0%' }}>
           {getMode(modes[i])}
         </RaisedButton>
       )
     }
     return (
-      <div>
+      <span>
         {buttons}
-        <RaisedButton onClick={this.nextMode.bind(this)} primary={true}>次のモードへ</RaisedButton>
-      </div>
+        <RaisedButton onClick={this.nextMode.bind(this)} primary={true} style={{ marginLeft: '3%' }}>次のモードへ</RaisedButton>
+      </span>
     )
   }
 }

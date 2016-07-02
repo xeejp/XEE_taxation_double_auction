@@ -19,6 +19,9 @@ class MatchingButton extends Component {
       <RaisedButton
         onClick={this.handleClick.bind(this)}
         primary={true}
+        style={{
+          marginLeft: '1%'
+        }}
       >
         マッチング
       </RaisedButton>

@@ -1,7 +1,10 @@
 import { handleActions } from 'redux-actions'
 import combineSectionReducers from 'combine-section-reducers'
 
-import { changeMode, nextMode } from 'host/actions'
+import {
+  changeMode, nextMode,
+  enableScreenMode, disableScreenMode
+} from 'host/actions'
 
 function removeFirst(list, target) {
   let found = false
@@ -106,12 +109,18 @@ const deals = handleActions({
   }
 }, [])
 
+const screenMode = handleActions({
+  [enableScreenMode]: (state, action) => true,
+  [disableScreenMode]: (state, action) => false
+}, false)
+
 const reducer = combineSectionReducers({
   mode,
   users,
   buyerBids,
   sellerBids,
   deals,
+  screenMode
 })
 
 export default reducer

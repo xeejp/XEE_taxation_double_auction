@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
+import RaisedButton from 'material-ui/RaisedButton'
 
 import ActionDispatcher from 'components/ActionDispatcher'
 import MessageSender from 'components/MessageSender'
@@ -9,11 +9,15 @@ import ModeButtons from './ModeButtons'
 import MatchingButton from './MatchingButton'
 import BidsTable from 'components/BidsTable'
 import Users from './Users'
+import ScreenMode from './ScreenMode'
 
-const mapStateToProps = ({buyerBids, sellerBids, deals}) => ({
+import { enableScreenMode } from './actions'
+
+const mapStateToProps = ({ buyerBids, sellerBids, deals, screenMode }) => ({
   buyerBids,
   sellerBids,
-  deals
+  deals,
+  screenMode
 })
 
 class App extends Component {
@@ -26,21 +30,36 @@ class App extends Component {
     sendData("fetch_contents")
   }
 
+  enableScreenMode() {
+    const { dispatch } = this.props
+    dispatch(enableScreenMode())
+  }
+
   render() {
-    const { buyerBids, sellerBids, deals } = this.props
+    const { buyerBids, sellerBids, deals, screenMode } = this.props
     return (
-      <MuiThemeProvider>
-        <div>
-          <ModeButtons />
-          <MatchingButton />
-          <Users />
-          <BidsTable
-            buyerBids={buyerBids}
-            sellerBids={sellerBids}
-            deals={deals}
-          />
-        </div>
-      </MuiThemeProvider>
+      <span>
+        { screenMode
+          ? <ScreenMode />
+          : (
+            <div>
+              <ModeButtons />
+              <MatchingButton />
+              <div style={{ marginTop: "2%" }}>
+                <Users />
+              </div>
+              <div style={{ marginTop: "2%" }}>
+                <BidsTable
+                  buyerBids={buyerBids}
+                  sellerBids={sellerBids}
+                  deals={deals}
+                />
+              </div>
+              <RaisedButton onClick={this.enableScreenMode.bind(this)} primary={true} style={{ marginTop: '5%' }}>スクリーンモードに移行</RaisedButton>
+            </div>
+          )
+        }
+      </span>
     )
   }
 }

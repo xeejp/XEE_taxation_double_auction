@@ -8,6 +8,8 @@ import createSagaMiddleware from 'redux-saga'
 import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin();
 
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
+
 import App from './App'
 
 import saga from './saga'
@@ -39,8 +41,10 @@ function sendData(action, params) {
 window.sendData = sendData
 
 render(
-  <Provider store={store}>
+  <MuiThemeProvider>
+    <Provider store={store}>
       <App />
-  </Provider>,
+    </Provider>
+  </MuiThemeProvider>,
   document.getElementById("content")
 )
