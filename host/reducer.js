@@ -25,10 +25,9 @@ const users = handleActions({
     const { payload } = action
     return payload.users
   },
-  'ADD_USER': (state, action) => {
-    const { payload } = action
+  'ADD_USER': (state, { id, user }) => {
     return Object.assign({}, state, {
-      [payload.id]: payload.user
+      [id]: user
     })
   },
   'UPDATE_USER': (state, { id, user }) => {

@@ -65,7 +65,7 @@ defmodule DoubleAuctionElixir do
     participants = Enum.shuffle(data.participants) |> Enum.map_reduce(1, fn {id, participant}, acc ->
       if rem(acc, 2) == 0 do
         new_participant = %{
-          role: "buyer",
+          role: "seller",
           money: acc * data.price_base,
           bidded: false,
           bid: nil,
@@ -73,7 +73,7 @@ defmodule DoubleAuctionElixir do
         }
       else
         new_participant = %{
-          role: "seller",
+          role: "buyer",
           money: acc * data.price_base,
           bidded: false,
           bid: nil,

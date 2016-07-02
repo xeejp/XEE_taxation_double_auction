@@ -3,9 +3,9 @@ export function getMode(mode) {
     case 'wait':
       return '待機'
     case 'description':
-      return '実験説明'
+      return '説明'
     case 'auction':
-      return 'ダブルオークション'
+      return '実験'
     case 'result':
       return '結果'
     default:
@@ -14,7 +14,12 @@ export function getMode(mode) {
 }
 
 export function getRole(role) {
-  return role == "buyer"
-    ? "買い手"
-    : "売り手"
+  switch (role) {
+    case 'buyer':
+      return '買い手'
+    case 'seller':
+      return '売り手'
+    default:
+      return '不参加'
+  }
 }

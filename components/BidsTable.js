@@ -10,6 +10,8 @@ const BidsTable = ({ buyerBids, sellerBids, deals }) => {
       return value
     }
   }
+  buyerBids = buyerBids.sort((a, b) => b - a)
+  sellerBids = sellerBids.sort((a, b) => a - b)
   for (let i = 0; i < length; i ++) {
     rows.push(
       <tr key={i}>

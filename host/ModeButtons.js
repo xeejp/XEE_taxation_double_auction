@@ -36,7 +36,7 @@ class ModeButtons extends Component {
     return (
       <span>
         {buttons}
-        <RaisedButton onClick={this.nextMode.bind(this)} primary={true} style={{ marginLeft: '3%' }}>次のモードへ</RaisedButton>
+        <RaisedButton onClick={this.nextMode.bind(this)} primary={true} style={{ marginLeft: '3%' }}>次へ</RaisedButton>
       </span>
     )
   }

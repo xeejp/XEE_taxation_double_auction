@@ -7,9 +7,12 @@ import { getMode } from 'util/index'
 function* changeModeSaga() {
   while (true) {
     const { payload } = yield take(`${submitMode}`)
-    const result = yield call(confirm, "本当に" + getMode(payload) + "モードに移行しますか？")
+    const result = yield call(confirm, getMode(payload) + "モードに移行しますか？")
     if (result) {
       sendData('change_mode', payload)
+      if (payload == 'auction') {
+        yield put(match())
+      }
       yield put(changeMode(payload))
     }
   }
@@ -34,7 +37,7 @@ function* nextModeSaga() {
 function* matchSaga() {
   while (true) {
     yield take(`${match}`)
-    const result = yield call(confirm, "本当にマッチングを行いますか？")
+    const result = yield call(confirm, "マッチングを行いますか？")
     if (result) {
       sendData('match')
     }
