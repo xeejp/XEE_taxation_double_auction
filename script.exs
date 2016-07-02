@@ -133,13 +133,13 @@ defmodule DoubleAuctionElixir do
     {:ok, %{"data" => data, "participant" => %{id => %{action: action}}}}
   end
 
-  def dealt(data, id1, id2) do
+  def dealt(data, id1, id2, money) do
     data
     |> update_in([:participants, id1], fn participant ->
-          %{participant | bidded: false, dealt: true, bid: nil}
+          %{participant | bidded: false, dealt: true, bid: money}
     end)
     |> update_in([:participants, id2], fn participant ->
-          %{participant | bidded: false, dealt: true, bid: nil}
+          %{participant | bidded: false, dealt: true, bid: money}
     end)
   end
 
@@ -158,14 +158,9 @@ defmodule DoubleAuctionElixir do
           now = DateTime.today
           buyer_id = elem(data.highest_bid, 0)
           deals = [{bid, now, {id, buyer_id}} | data.deals]
-          participants = data.participants
-                        |> Map.update!(id, &(Map.put(&1, :dealt, true)))
-                        |> Map.update!(id, &(Map.put(&1, :bid, bid)))
-                        |> Map.update!(buyer_id, &(Map.put(&1, :dealt, true)))
-                        |> Map.update!(buyer_id, &(Map.put(&1, :bid, bid)))
           buyer_bids = List.delete(data.buyer_bids, data.highest_bid)
-          data = %{data | deals: deals, participants: participants, buyer_bids: buyer_bids}
-          data = dealt(data, id, buyer_id)
+          data = %{data | deals: deals, buyer_bids: buyer_bids}
+          data = dealt(data, id, buyer_id, bid)
 
           host_action = %{
             type: "DEALT",
@@ -227,14 +222,9 @@ defmodule DoubleAuctionElixir do
           now = DateTime.today()
           seller_id = elem(data.lowest_bid, 0)
           deals = [{bid, DateTime.today(), {id, seller_id}} | data.deals]
-          participants = data.participants
-                        |> Map.update!(id, &(Map.put(&1, :dealt, true)))
-                        |> Map.update!(id, &(Map.put(&1, :bid, bid)))
-                        |> Map.update!(seller_id, &(Map.put(&1, :dealt, true)))
-                        |> Map.update!(seller_id, &(Map.put(&1, :bid, bid)))
           seller_bids = List.delete(data.seller_bids, data.lowest_bid)
-          data = %{data | deals: deals, participants: participants, seller_bids: seller_bids}
-          data = dealt(data, id, seller_id)
+          data = %{data | deals: deals, seller_bids: seller_bids}
+          data = dealt(data, id, seller_id, bid)
 
           host_action = %{
             type: "DEALT",

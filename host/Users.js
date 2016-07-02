@@ -6,7 +6,7 @@ import { Card, CardHeader, CardText } from 'material-ui/Card'
 import { getRole } from 'util/index'
 
 const User = ({ id, role, money, bid, bidded, dealt }) => (
-  <tr key={id}>
+  <tr>
     <td>{id}</td>
     <td>{getRole(role)}</td>
     <td>{money}</td>
@@ -43,6 +43,7 @@ const Users = ({ users }) => (
           {
             Object.keys(users).map(id => (
               <User
+                key={id}
                 id={id}
                 role={users[id].role}
                 money={users[id].money}
