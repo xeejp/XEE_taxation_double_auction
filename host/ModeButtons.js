@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 
 import RaisedButton from 'material-ui/RaisedButton'
 
-import { changeMode } from 'host/actions'
+import { submitMode, nextMode } from 'host/actions'
 
 const modes = ["wait", "description", "auction", "result"]
 
@@ -14,7 +14,14 @@ const mapStateToProps = ({ mode }) => ({
 class ModeButtons extends Component {
   changeMode(mode) {
     const { dispatch } = this.props
-    dispatch(changeMode(mode))
+    if (confirm("本当に" + mode + "モードに移行しますか？")) {
+      dispatch(submitMode(mode))
+    }
+  }
+
+  nextMode(mode) {
+    const { dispatch } = this.props
+    dispatch(nextMode())
   }
 
   render() {
@@ -29,6 +36,7 @@ class ModeButtons extends Component {
     return (
       <div>
         {buttons}
+        <RaisedButton onClick={this.nextMode.bind(this)} primary={true}>次のモードへ</RaisedButton>
       </div>
     )
   }

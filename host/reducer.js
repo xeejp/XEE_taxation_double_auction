@@ -1,6 +1,8 @@
 import { handleActions } from 'redux-actions'
 import combineSectionReducers from 'combine-section-reducers'
 
+import { changeMode, nextMode } from 'host/actions'
+
 function removeFirst(list, target) {
   let found = false
   return list.filter(x => (found || !(found = x == target)))
@@ -10,7 +12,7 @@ const mode = handleActions({
   'RECEIVE_CONTENTS': (state, { payload }) => {
     return payload.mode
   },
-  'CHANGE_MODE': (state, action) => {
+  [changeMode]: (state, action) => {
     return action.payload
   }
 }, "wait")

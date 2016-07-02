@@ -11,3 +11,5 @@ export const description = createAction('DESCRIPTION')
 export const match = createAction('MATCH')
 
 export const changeMode = createAction('CHANGE_MODE', mode => mode)
+export const submitMode = createAction('SUBMIT_MODE', mode => mode)
+export const nextMode = createAction('NEXT_MODE')

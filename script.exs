@@ -58,7 +58,7 @@ defmodule DoubleAuctionElixir do
     }
     data = %{data | mode: mode}
     {_, participant} = dispatch_to_all(data.participants, action)
-    {:ok, %{"data" => data, "participant" => participant}}
+    {:ok, %{"data" => data, "host" => %{action: action}, "participant" => participant}}
   end
 
   def handle_received(data, %{"action" => "match"}) do
