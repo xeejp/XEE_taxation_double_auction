@@ -30,6 +30,12 @@ class MatchingButton extends Component {
     dispatch(bid(parseInt(value, 10)))
   }
 
+  handleKeyDown(event) {
+    if (event.key === "Enter" || event.keyCode === 13) { // Enter
+      this.handleClick()
+    }
+  }
+
   render() {
     const { value } = this.state
     return (
@@ -38,6 +44,7 @@ class MatchingButton extends Component {
           floatingLabelText='提案金額'
           value={value}
           onChange={this.handleChange.bind(this)}
+          onKeyDown={this.handleKeyDown.bind(this)}
         /><br />
         <RaisedButton
           onClick={this.handleClick.bind(this)}
