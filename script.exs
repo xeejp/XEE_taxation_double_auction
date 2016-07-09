@@ -192,6 +192,8 @@ defmodule DoubleAuctionElixir do
           seller_bids = [{id, bid} | data.seller_bids]
           if is_nil(data.lowest_bid) or bid < elem(data.lowest_bid, 1) do
             lowest_bid = {id, bid}
+          else
+            lowest_bid = data.lowest_bid
           end
           data = %{data | seller_bids: seller_bids, lowest_bid: lowest_bid}
           data = update_in(data, [:participants, id], fn participant ->
@@ -254,8 +256,10 @@ defmodule DoubleAuctionElixir do
           end) |> Enum.into(%{})
         else
           buyer_bids = [{id, bid} | data.buyer_bids]
-          if is_nil(data.highest_bid) or  bid > elem(data.highest_bid, 1) do
+          if is_nil(data.highest_bid) or bid > elem(data.highest_bid, 1) do
             highest_bid = {id, bid}
+          else
+            highest_bid = data.highest_bid
           end
           data = %{data | buyer_bids: buyer_bids, highest_bid: highest_bid}
           data = update_in(data, [:participants, id], fn participant ->
