@@ -6,21 +6,30 @@ import RaisedButton from 'material-ui/RaisedButton'
 
 import { bid } from './actions'
 
-const mapStateToProps = ({}) => ({
+const mapStateToProps = ({personal}) => ({
+  role: personal.role,
+  money: personal.money
 })
 
 class MatchingButton extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      value: ''
+      value: '',
+      isValid: false
     }
   }
 
   handleChange(event) {
     const value = event.target.value
+    const { role, money } = this.props
+    const numValue = parseInt(value, 10)
+    const isValid = role == "buyer"
+      ? numValue <= money
+      : numValue >= money
     this.setState({
-      value
+      value,
+      isValid
     })
   }
 
@@ -31,13 +40,14 @@ class MatchingButton extends Component {
   }
 
   handleKeyDown(event) {
-    if (event.key === "Enter" || event.keyCode === 13) { // Enter
+    const { isValid } = this.state
+    if (isValid && (event.key === "Enter" || event.keyCode === 13)) { // Enter
       this.handleClick()
     }
   }
 
   render() {
-    const { value } = this.state
+    const { value, isValid } = this.state
     return (
       <div>
         <TextField
@@ -47,6 +57,8 @@ class MatchingButton extends Component {
           onKeyDown={this.handleKeyDown.bind(this)}
         /><br />
         <RaisedButton
+          primary={true}
+          disabled={!isValid}
           onClick={this.handleClick.bind(this)}
         >送信</RaisedButton>
       </div>
