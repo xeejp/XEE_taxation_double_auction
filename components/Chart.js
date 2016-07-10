@@ -29,7 +29,11 @@ const Chart = ({users}) => {
         <Highcharts config={{
           chart: {
             type: 'area',
+            animation: false,
             inverted: true
+          },
+          title: {
+            text: null
           },
           xAxis: {
             title: {
@@ -51,13 +55,18 @@ const Chart = ({users}) => {
           plotOptions: {
             area: {
               fillOpacity: 0.5,
+              marker: {
+                enabled: false
+              }
             }
           },
           series: [{
+            animation: false,
             name: '需要',
             step: 'right',
             data: buyerBids.sort((a, b) => a - b).map((x, y, a) => [x, a.length - y])
           }, {
+            animation: false,
             name: '供給',
             step: 'left',
             data: sellerBids.sort((a, b) => a - b).map((x, y) => [x, y + 1])

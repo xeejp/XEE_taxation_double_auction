@@ -20,6 +20,10 @@ const Buyer = ({ money, bidded, bid, dealt, deal }) => {
       <div>
         <p>あなたは買い手です。</p>
         <p>{money}以下の金額で購入することができます。</p>
+        {bidded
+          ? <p>{bid}で提案中です。</p>
+          : null
+        }
         <BidForm />
       </div>
     )
@@ -39,6 +43,10 @@ const Seller = ({ money, bidded, bid, dealt, deal }) => {
       <div>
         <p>あなたは売り手です。</p>
         <p>{money}以上の金額で売却することができます。</p>
+        {bidded
+          ? <p>{bid}で提案中です。</p>
+          : null
+        }
         <BidForm />
       </div>
     )

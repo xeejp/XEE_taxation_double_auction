@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 
 import TextField from 'material-ui/TextField'
 import RaisedButton from 'material-ui/RaisedButton'
+import SnackBar from 'material-ui/SnackBar'
 
 import { bid } from './actions'
 
@@ -16,8 +17,16 @@ class MatchingButton extends Component {
     super(props)
     this.state = {
       value: '',
-      isValid: false
+      isValid: false,
+      snack: false,
+      bid: ''
     }
+  }
+
+  closeSnack() {
+    this.setState({
+      snack: false
+    })
   }
 
   handleChange(event) {
@@ -38,7 +47,9 @@ class MatchingButton extends Component {
     const { value } = this.state
     this.setState({
       value: '',
-      isValid: false
+      isValid: false,
+      snack: true,
+      bid: value
     })
     dispatch(bid(parseInt(value, 10)))
   }
@@ -51,7 +62,7 @@ class MatchingButton extends Component {
   }
 
   render() {
-    const { value, isValid } = this.state
+    const { value, bid, snack, isValid } = this.state
     return (
       <div>
         <TextField
@@ -65,6 +76,12 @@ class MatchingButton extends Component {
           disabled={!isValid}
           onClick={this.handleClick.bind(this)}
         >送信</RaisedButton>
+        <SnackBar
+          open={snack}
+          message={bid + 'で提案しました。'}
+          autoHideDuration={3000}
+          onRequestClose={this.closeSnack.bind(this)}
+        />
       </div>
     )
   }
