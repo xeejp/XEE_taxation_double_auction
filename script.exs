@@ -143,6 +143,20 @@ defmodule DoubleAuctionElixir do
     end)
   end
 
+  def set_highest_bid(%{buyer_bids: []} = data) do
+    %{ data | highest_bid: nil }
+  end
+  def set_highest_bid(%{buyer_bids: bids} = data) do
+    %{ data | highest_bid: Enum.max_by(bids, &elem(&1, 1)) }
+  end
+
+  def set_lowest_bid(%{seller_bids: []} = data) do
+    %{ data | lowest_bid: nil }
+  end
+  def set_lowest_bid(%{seller_bids: bids} = data) do
+    %{ data | lowest_bid: Enum.min_by(bids, &elem(&1, 1)) }
+  end
+
   def handle_received(data, %{"action" => "bid", "params" => bid}, id) do
     participant = Map.get(data.participants, id)
     participant_actions = %{}
@@ -150,12 +164,15 @@ defmodule DoubleAuctionElixir do
 
     case participant do
       # Seller
-      %{role: "seller", bidded: bidded, bid: previous_bid, money: money} when not is_nil(money) and bid >= money ->
+      %{role: "seller", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid >= money ->
         if previous_bid != nil do
           data = %{data | seller_bids: List.delete(data.seller_bids, {id, previous_bid})}
+          if not is_nil(data.lowest_bid) and elem(data.lowest_bid, 0) == id do
+            data = set_lowest_bid(data)
+          end
         end
         if not is_nil(data.highest_bid) and bid <= elem(data.highest_bid, 1) do
-          now = DateTime.today
+          now = DateTime.today()
           buyer_id = elem(data.highest_bid, 0)
           deals = [{bid, now, {id, buyer_id}} | data.deals]
           buyer_bids = List.delete(data.buyer_bids, data.highest_bid)
@@ -188,6 +205,7 @@ defmodule DoubleAuctionElixir do
               }}
             end
           end) |> Enum.into(%{})
+          data = set_highest_bid(data)
         else
           seller_bids = [{id, bid} | data.seller_bids]
           if is_nil(data.lowest_bid) or bid < elem(data.lowest_bid, 1) do
@@ -216,22 +234,25 @@ defmodule DoubleAuctionElixir do
           end) |> Enum.into(%{})
         end
       # Buyer
-      %{role: "buyer", bidded: bidded, bid: previous_bid, money: money} when not is_nil(money) and bid <= money ->
+      %{role: "buyer", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid <= money ->
         if previous_bid != nil do
           data = %{data | buyer_bids: List.delete(data.buyer_bids, {id, previous_bid})}
+          if not is_nil(data.highest_bid) and elem(data.highest_bid, 0) == id do
+            data = set_highest_bid(data)
+          end
         end
         if not is_nil(data.lowest_bid) and bid >= elem(data.lowest_bid, 1) do
           now = DateTime.today()
           seller_id = elem(data.lowest_bid, 0)
-          deals = [{bid, DateTime.today(), {id, seller_id}} | data.deals]
+          deals = [{bid, now, {id, seller_id}} | data.deals]
           seller_bids = List.delete(data.seller_bids, data.lowest_bid)
           data = %{data | deals: deals, seller_bids: seller_bids}
           data = dealt(data, id, seller_id, bid)
 
           host_action = %{
             type: "DEALT",
-            sellerID: seller_id, buyerID: id,
-            time: now, money: bid, money2: elem(data.lowest_bid, 1), previousBid: previous_bid
+            sellerID: seller_id, buyerID: id, time: now,
+            money: bid, money2: elem(data.lowest_bid, 1), previousBid: previous_bid
           }
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
             if p_id == seller_id or p_id == id do
@@ -254,6 +275,7 @@ defmodule DoubleAuctionElixir do
               }}
             end
           end) |> Enum.into(%{})
+          data = set_lowest_bid(data)
         else
           buyer_bids = [{id, bid} | data.buyer_bids]
           if is_nil(data.highest_bid) or bid > elem(data.highest_bid, 1) do
