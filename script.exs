@@ -29,7 +29,7 @@ defmodule DoubleAuctionElixir do
 
   def join(%{participants: participants} = data, id) do
     if not Map.has_key?(participants, id) do
-      participant = %{role: nil, bidded: false, money: nil, bid: nil, dealt: false}
+      participant = %{role: nil, bidded: false, money: nil, bid: nil, dealt: false, deal: nil}
       participants = Map.put(participants, id, participant)
       data = %{data | participants: participants}
       action = %{
@@ -41,6 +41,30 @@ defmodule DoubleAuctionElixir do
     else
       {:ok, %{"data" => data}}
     end
+  end
+
+  def dealt(data, id1, id2, money) do
+    data
+    |> update_in([:participants, id1], fn participant ->
+          %{participant | bidded: false, bid: money, dealt: true, deal: money}
+    end)
+    |> update_in([:participants, id2], fn participant ->
+          %{participant | bidded: false, dealt: true, deal: money}
+    end)
+  end
+
+  def set_highest_bid(%{buyer_bids: []} = data) do
+    %{ data | highest_bid: nil }
+  end
+  def set_highest_bid(%{buyer_bids: bids} = data) do
+    %{ data | highest_bid: Enum.max_by(bids, &elem(&1, 1)) }
+  end
+
+  def set_lowest_bid(%{seller_bids: []} = data) do
+    %{ data | lowest_bid: nil }
+  end
+  def set_lowest_bid(%{seller_bids: bids} = data) do
+    %{ data | lowest_bid: Enum.min_by(bids, &elem(&1, 1)) }
   end
 
   def handle_received(data, %{"action" => "start"}) do
@@ -70,6 +94,7 @@ defmodule DoubleAuctionElixir do
           bidded: false,
           bid: nil,
           dealt: false,
+          deal: nil
         }
       else
         new_participant = %{
@@ -78,6 +103,7 @@ defmodule DoubleAuctionElixir do
           bidded: false,
           bid: nil,
           dealt: false,
+          deal: nil
         }
       end
       {{id, new_participant}, acc + 1}
@@ -133,30 +159,6 @@ defmodule DoubleAuctionElixir do
     {:ok, %{"data" => data, "participant" => %{id => %{action: action}}}}
   end
 
-  def dealt(data, id1, id2, money) do
-    data
-    |> update_in([:participants, id1], fn participant ->
-          %{participant | bidded: false, dealt: true, bid: money}
-    end)
-    |> update_in([:participants, id2], fn participant ->
-          %{participant | bidded: false, dealt: true, bid: money}
-    end)
-  end
-
-  def set_highest_bid(%{buyer_bids: []} = data) do
-    %{ data | highest_bid: nil }
-  end
-  def set_highest_bid(%{buyer_bids: bids} = data) do
-    %{ data | highest_bid: Enum.max_by(bids, &elem(&1, 1)) }
-  end
-
-  def set_lowest_bid(%{seller_bids: []} = data) do
-    %{ data | lowest_bid: nil }
-  end
-  def set_lowest_bid(%{seller_bids: bids} = data) do
-    %{ data | lowest_bid: Enum.min_by(bids, &elem(&1, 1)) }
-  end
-
   def handle_received(data, %{"action" => "bid", "params" => bid}, id) do
     participant = Map.get(data.participants, id)
     participant_actions = %{}
@@ -181,7 +183,7 @@ defmodule DoubleAuctionElixir do
 
           host_action = %{
             type: "DEALT",
-            sellerID: id, buyerID: buyer_id, time: now,
+            id1: id, id2: buyer_id, time: now,
             money: bid, money2: elem(data.highest_bid, 1), previousBid: previous_bid
           }
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
@@ -189,6 +191,7 @@ defmodule DoubleAuctionElixir do
               {p_id, %{
                 action: %{
                   type: "DEALT",
+                  bidded: p_id == id,
                   money: bid,
                   money2: elem(data.highest_bid, 1),
                   previousBid: previous_bid
@@ -208,10 +211,10 @@ defmodule DoubleAuctionElixir do
           data = set_highest_bid(data)
         else
           seller_bids = [{id, bid} | data.seller_bids]
-          if is_nil(data.lowest_bid) or bid < elem(data.lowest_bid, 1) do
-            lowest_bid = {id, bid}
+          lowest_bid = if is_nil(data.lowest_bid) or bid < elem(data.lowest_bid, 1) do
+            {id, bid}
           else
-            lowest_bid = data.lowest_bid
+            data.lowest_bid
           end
           data = %{data | seller_bids: seller_bids, lowest_bid: lowest_bid}
           data = update_in(data, [:participants, id], fn participant ->
@@ -226,6 +229,7 @@ defmodule DoubleAuctionElixir do
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
             {p_id, %{
               action: %{
+                bidded: p_id == id,
                 type: "NEW_SELLER_BIDS",
                 money: bid,
                 previousBid: previous_bid
@@ -251,7 +255,7 @@ defmodule DoubleAuctionElixir do
 
           host_action = %{
             type: "DEALT",
-            sellerID: seller_id, buyerID: id, time: now,
+            id1: id, id2: seller_id, time: now,
             money: bid, money2: elem(data.lowest_bid, 1), previousBid: previous_bid
           }
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
@@ -259,6 +263,7 @@ defmodule DoubleAuctionElixir do
               {p_id, %{
                 action: %{
                   type: "DEALT",
+                  bidded: p_id == id,
                   money: bid,
                   money2: elem(data.lowest_bid, 1),
                   previousBid: previous_bid
@@ -278,10 +283,10 @@ defmodule DoubleAuctionElixir do
           data = set_lowest_bid(data)
         else
           buyer_bids = [{id, bid} | data.buyer_bids]
-          if is_nil(data.highest_bid) or bid > elem(data.highest_bid, 1) do
-            highest_bid = {id, bid}
+          highest_bid = if is_nil(data.highest_bid) or bid > elem(data.highest_bid, 1) do
+            {id, bid}
           else
-            highest_bid = data.highest_bid
+            data.highest_bid
           end
           data = %{data | buyer_bids: buyer_bids, highest_bid: highest_bid}
           data = update_in(data, [:participants, id], fn participant ->
@@ -296,6 +301,7 @@ defmodule DoubleAuctionElixir do
           participant_actions = Enum.map(data.participants, fn {p_id, _} ->
             {p_id, %{
               action: %{
+                bidded: p_id == id,
                 type: "NEW_BUYER_BIDS",
                 money: bid,
                 previousBid: previous_bid

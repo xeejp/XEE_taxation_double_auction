@@ -54,15 +54,16 @@ const users = handleActions({
       })
     })
   },
-  'DEALT': (state, { sellerID, buyerID, money }) => {
+  'DEALT': (state, { id1, id2, money }) => {
     return Object.assign({}, state, {
-      [sellerID]: Object.assign({}, state[sellerID], {
+      [id1]: Object.assign({}, state[id1], {
+        bid: money,
         dealt: true,
-        bid: money
+        deal: money
       }),
-      [buyerID]: Object.assign({}, state[buyerID], {
+      [id2]: Object.assign({}, state[id2], {
         dealt: true,
-        bid: money
+        deal: money
       })
     })
   }

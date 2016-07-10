@@ -15,15 +15,13 @@ class MatchingButton extends Component {
   }
 
   render() {
+    const { style } = this.props
     return (
       <RaisedButton
         onClick={this.handleClick.bind(this)}
-        primary={true}
-        style={{
-          marginLeft: '1%'
-        }}
+        style={style}
       >
-        マッチング
+        再マッチング
       </RaisedButton>
     )
   }

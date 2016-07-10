@@ -22,11 +22,27 @@ const personal = handleActions({
   'RECEIVE_CONTENTS': (state, { payload }) => {
     return payload.personal
   },
-  'DEALT': (state, { money }) => {
+  'DEALT': (state, { bidded, money }) => {
+    const bid = bidded
+      ? money
+      : state.bid
     return Object.assign({}, state, {
-      bid: money,
+      bid,
+      deal: money,
       dealt: true
     })
+  },
+  'NEW_BUYER_BIDS': (state, { bidded, money }) => {
+    const bid = bidded
+      ? money
+      : state.bid
+    return Object.assign({}, state, { bid })
+  },
+  'NEW_SELLER_BIDS': (state, { bidded, money }) => {
+    const bid = bidded
+      ? money
+      : state.bid
+    return Object.assign({}, state, { bid })
   },
 }, {})
 

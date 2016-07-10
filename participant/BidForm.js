@@ -36,6 +36,10 @@ class MatchingButton extends Component {
   handleClick() {
     const { dispatch } = this.props
     const { value } = this.state
+    this.setState({
+      value: '',
+      isValid: false
+    })
     dispatch(bid(parseInt(value, 10)))
   }
 

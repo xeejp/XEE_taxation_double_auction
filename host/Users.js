@@ -5,14 +5,14 @@ import { Card, CardHeader, CardText } from 'material-ui/Card'
 
 import { getRole } from 'util/index'
 
-const User = ({ id, role, money, bid, bidded, dealt }) => (
+const User = ({ id, role, money, bid, bidded, dealt, deal }) => (
   <tr>
     <td>{id}</td>
     <td>{getRole(role)}</td>
     <td>{money}</td>
     <td>{
       dealt
-        ? bid + "で成立"
+        ? deal + "で成立"
         : bidded
           ? bid + "を入札"
           : "未入札"
@@ -50,6 +50,7 @@ const Users = ({ users }) => (
                 bid={users[id].bid}
                 bidded={users[id].bidded}
                 dealt={users[id].dealt}
+                deal={users[id].deal}
               />
               ))
           }

@@ -31,7 +31,9 @@ class ModeButtons extends Component {
     for (let i = 0; i < modes.length; i ++) {
       buttons[i] = (
         <Step key={i}>
-          <StepButton onClick={this.changeMode.bind(this, modes[i])}>{getMode(modes[i])}</StepButton>
+          <StepButton
+            onClick={this.changeMode.bind(this, modes[i])}
+          >{getMode(modes[i])}</StepButton>
         </Step>
       )
     }
