@@ -7,19 +7,19 @@ import { getMode } from 'util/index'
 function* changeModeSaga() {
   while (true) {
     const { payload } = yield take(`${submitMode}`)
-    const result = yield call(confirm, getMode(payload) + "モードに移行しますか？")
-    if (result) {
+//    const result = yield call(confirm, getMode(payload) + "モードに移行しますか？")
+//    if (result) {
       sendData('change_mode', payload)
-      if (payload == 'auction') {
+      if (payload == 'description') {
         yield put(match())
       }
       yield put(changeMode(payload))
-    }
+//    }
   }
 }
 
 function* nextModeSaga() {
-  const modes = ["description", "auction", "result"]
+  const modes = ["description", "auction", "result", "wait"]
   while (true) {
     yield take(`${nextMode}`)
     const mode = yield select(({ mode }) => mode)
@@ -37,10 +37,10 @@ function* nextModeSaga() {
 function* matchSaga() {
   while (true) {
     yield take(`${match}`)
-    const result = yield call(confirm, "マッチングを行いますか？")
-    if (result) {
+//    const result = yield call(confirm, "マッチングを行いますか？")
+//    if (result) {
       sendData('match')
-    }
+//    }
   }
 }
 
