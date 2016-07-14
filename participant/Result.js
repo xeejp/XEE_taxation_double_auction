@@ -1,17 +1,21 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
-const mapStateToProps = ({}) => ({
-})
+import { Card, CardTitle, CardAction, CardText } from 'material-ui/Card'
+
+const mapStateToProps = ({}) => ({})
 
 class Result extends Component {
-  render() {
-    return (
-      <div>
-        <p>結果画面</p>
-      </div>
-    )
-  }
+    render() {
+        return (
+            <Card>
+                <CardTitle title="ダブルオークション実験" subtitle="結果"/>
+                <CardText>
+                    <p>スクリーンをご覧ください。</p>
+                </CardText>
+            </Card>
+        )
+    }
 }
 
 export default connect(mapStateToProps)(Result)
