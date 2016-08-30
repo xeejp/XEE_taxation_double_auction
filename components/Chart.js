@@ -1,4 +1,5 @@
 import React from 'react'
+import throttle from 'react-throttle-render'
 
 import { Card, CardHeader, CardText } from 'material-ui/Card'
 import Highcharts from 'react-highcharts'
@@ -77,4 +78,4 @@ const Chart = ({users}) => {
   )
 }
 
-export default Chart
+export default throttle(Chart, 200)
