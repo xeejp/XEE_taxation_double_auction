@@ -161,153 +161,22 @@ defmodule DoubleAuctionElixir do
 
   def handle_received(data, %{"action" => "bid", "params" => bid}, id) do
     participant = Map.get(data.participants, id)
-    participant_actions = %{}
-    host_action = nil
-
-    case participant do
+    {data, host_action, participant_actions} = case participant do
       # Seller
       %{role: "seller", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid >= money ->
-        if previous_bid != nil do
-          data = %{data | seller_bids: List.delete(data.seller_bids, {id, previous_bid})}
-          if not is_nil(data.lowest_bid) and elem(data.lowest_bid, 0) == id do
-            data = set_lowest_bid(data)
-          end
-        end
+        data = remove_first(data, id, previous_bid, :lowest_bid, :seller_bids, &set_lowest_bid/1)
         if not is_nil(data.highest_bid) and bid <= elem(data.highest_bid, 1) do
-          now = DateTime.today()
-          buyer_id = elem(data.highest_bid, 0)
-          deals = [{bid, now, {id, buyer_id}} | data.deals]
-          buyer_bids = List.delete(data.buyer_bids, data.highest_bid)
-          data = %{data | deals: deals, buyer_bids: buyer_bids}
-          data = dealt(data, id, buyer_id, bid)
-
-          host_action = %{
-            type: "DEALT",
-            id1: id, id2: buyer_id, time: now,
-            money: bid, money2: elem(data.highest_bid, 1), previousBid: previous_bid
-          }
-          participant_actions = Enum.map(data.participants, fn {p_id, _} ->
-            if p_id == id or p_id == buyer_id do
-              {p_id, %{
-                action: %{
-                  type: "DEALT",
-                  bidded: p_id == id,
-                  money: bid,
-                  money2: elem(data.highest_bid, 1),
-                  previousBid: previous_bid
-                }
-              }}
-            else
-              {p_id, %{
-                action: %{
-                  type: "SOMEONE_DEALT",
-                  money: bid,
-                  money2: elem(data.highest_bid, 1),
-                  previousBid: previous_bid
-                }
-              }}
-            end
-          end) |> Enum.into(%{})
-          data = set_highest_bid(data)
+          deal(data, :highest_bid, :buyer_bids, id, bid, previous_bid, &set_highest_bid/1)
         else
-          seller_bids = [{id, bid} | data.seller_bids]
-          lowest_bid = if is_nil(data.lowest_bid) or bid < elem(data.lowest_bid, 1) do
-            {id, bid}
-          else
-            data.lowest_bid
-          end
-          data = %{data | seller_bids: seller_bids, lowest_bid: lowest_bid}
-          data = update_in(data, [:participants, id], fn participant ->
-            %{participant | bidded: true, bid: bid}
-          end)
-          host_action = %{
-            type: "NEW_SELLER_BIDS",
-            money: bid,
-            previousBid: previous_bid,
-            id: id
-          }
-          participant_actions = Enum.map(data.participants, fn {p_id, _} ->
-            {p_id, %{
-              action: %{
-                bidded: p_id == id,
-                type: "NEW_SELLER_BIDS",
-                money: bid,
-                previousBid: previous_bid
-              }
-            }}
-          end) |> Enum.into(%{})
+          bid(data, :lowest_bid, :seller_bids, id, bid, previous_bid, "NEW_SELLER_BIDS")
         end
       # Buyer
       %{role: "buyer", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid <= money ->
-        if previous_bid != nil do
-          data = %{data | buyer_bids: List.delete(data.buyer_bids, {id, previous_bid})}
-          if not is_nil(data.highest_bid) and elem(data.highest_bid, 0) == id do
-            data = set_highest_bid(data)
-          end
-        end
+        data = remove_first(data, id, previous_bid, :highest_bid, :buyer_bids, &set_highest_bid/1)
         if not is_nil(data.lowest_bid) and bid >= elem(data.lowest_bid, 1) do
-          now = DateTime.today()
-          seller_id = elem(data.lowest_bid, 0)
-          deals = [{bid, now, {id, seller_id}} | data.deals]
-          seller_bids = List.delete(data.seller_bids, data.lowest_bid)
-          data = %{data | deals: deals, seller_bids: seller_bids}
-          data = dealt(data, id, seller_id, bid)
-
-          host_action = %{
-            type: "DEALT",
-            id1: id, id2: seller_id, time: now,
-            money: bid, money2: elem(data.lowest_bid, 1), previousBid: previous_bid
-          }
-          participant_actions = Enum.map(data.participants, fn {p_id, _} ->
-            if p_id == seller_id or p_id == id do
-              {p_id, %{
-                action: %{
-                  type: "DEALT",
-                  bidded: p_id == id,
-                  money: bid,
-                  money2: elem(data.lowest_bid, 1),
-                  previousBid: previous_bid
-                }
-              }}
-            else
-              {p_id, %{
-                action: %{
-                  type: "SOMEONE_DEALT",
-                  money: bid,
-                  money2: elem(data.lowest_bid, 1),
-                  previousBid: previous_bid
-                }
-              }}
-            end
-          end) |> Enum.into(%{})
-          data = set_lowest_bid(data)
+          deal(data, :lowest_bid, :seller_bids, id, bid, previous_bid, &set_lowest_bid/1)
         else
-          buyer_bids = [{id, bid} | data.buyer_bids]
-          highest_bid = if is_nil(data.highest_bid) or bid > elem(data.highest_bid, 1) do
-            {id, bid}
-          else
-            data.highest_bid
-          end
-          data = %{data | buyer_bids: buyer_bids, highest_bid: highest_bid}
-          data = update_in(data, [:participants, id], fn participant ->
-            %{participant | bidded: true, bid: bid}
-          end)
-          host_action = %{
-            type: "NEW_BUYER_BIDS",
-            money: bid,
-            previousBid: previous_bid,
-            id: id
-          }
-          participant_actions = Enum.map(data.participants, fn {p_id, _} ->
-            {p_id, %{
-              action: %{
-                bidded: p_id == id,
-                type: "NEW_BUYER_BIDS",
-                money: bid,
-                previousBid: previous_bid
-              }
-            }}
-          end) |> Enum.into(%{})
+          bid(data, :highest_bid, :buyer_bids, id, bid, previous_bid, "NEW_BUYER_BIDS")
         end
     end
 
@@ -316,6 +185,92 @@ defmodule DoubleAuctionElixir do
     else
       {:ok, %{"data" => data, "participant" => participant_actions}}
     end
+  end
+
+  def remove_first(data, id, previous_bid, bid_key, key, set) do
+    if previous_bid != nil do
+      data = %{data | key => List.delete(data[key], {id, previous_bid})}
+      if not is_nil(data[bid_key]) and elem(data[bid_key], 0) == id do
+        data = set.(data)
+      end
+    end
+    data
+  end
+
+  def bid(data, bid_key, key, id, bid, previous_bid, action) do
+    bids = [{id, bid} | data[key]]
+    most_bid = if is_nil(data[bid_key]) or bid > elem(data[bid_key], 1) do
+      {id, bid}
+    else
+      data[bid_key]
+    end
+    data = %{data | key => bids, bid_key => most_bid}
+    data = update_in(data, [:participants, id], fn participant ->
+      %{participant | bidded: true, bid: bid}
+    end)
+    host_action = %{ type: action, money: bid, previousBid: previous_bid, id: id }
+    participant_actions = bid_action_for_participants(data.participants, id, bid, previous_bid, action)
+    {data, host_action, participant_actions}
+  end
+
+  def deal(data, bid_key, partner_key, id, bid, previous_bid, set) do
+    now = DateTime.today()
+    id2 = elem(data[bid_key], 0)
+    deals = [new_deal(bid, id, id2, now) | data.deals]
+    bids = List.delete(data[partner_key], data[bid_key])
+    data = %{data | :deals => deals, partner_key => bids}
+    data = dealt(data, id, id2, bid)
+
+    host_action = %{
+      type: "DEALT",
+      id1: id, id2: id2, time: now,
+      money: bid, money2: elem(data[bid_key], 1), previousBid: previous_bid
+    }
+    participant_actions = Enum.map(data.participants, fn {p_id, _} ->
+      deal_or_dealt_action(p_id, id, id2, bid, elem(data[bid_key], 1), previous_bid)
+    end) |> Enum.into(%{})
+    data = set.(data)
+    {data, host_action, participant_actions}
+  end
+
+  def bid_action_for_participants(participants, id, bid, previous_bid, action) do
+    Enum.map(participants, fn {p_id, _} ->
+      {p_id, %{
+        action: %{
+          bidded: p_id == id,
+          type: action,
+          money: bid,
+          previousBid: previous_bid
+        }
+      }}
+    end) |> Enum.into(%{})
+  end
+
+  def deal_or_dealt_action(p_id, id, id2, bid, bid2, previous_bid) do
+    if p_id == id2 or p_id == id do
+      {p_id, %{
+        action: %{
+          type: "DEALT",
+          bidded: p_id == id,
+          money: bid,
+          money2: bid2,
+          previousBid: previous_bid
+        }
+      }}
+    else
+      {p_id, %{
+        action: %{
+          type: "SOMEONE_DEALT",
+          money: bid,
+          money2: bid2,
+          previousBid: previous_bid
+        }
+      }}
+    end
+  end
+
+  def new_deal(bid, id, id2, now) do
+    {bid, now, {id, id2}}
   end
 
   def dispatch_to_all(participants, action) do
