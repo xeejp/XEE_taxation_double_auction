@@ -4,6 +4,7 @@
   "main": "host.js",
   "author": "",
   "dependencies": {
+    "babel-loader": "^6.2.5",
     "babel-polyfill": "^6.8.0",
     "combine-section-reducers": "^1.0.4",
     "material-ui": "^0.15.1",
@@ -25,9 +26,9 @@
     "webpack": "^1.13.0"
   },
   "scripts": {
-    "build:dev": "./node_modules/webpack/bin/webpack.js",
-    "build:watch": "./node_modules/webpack/bin/webpack.js -w",
-    "build:prod": "NODE_ENV=production ./node_modules/webpack/bin/webpack.js --config webpack.production.config.js -p",
+    "build:dev": "webpack",
+    "build:watch": "webpack -w",
+    "build:prod": "NODE_ENV=production webpack --config webpack.production.config.js -p",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

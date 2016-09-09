@@ -1,5 +1,5 @@
-defmodule DoubleAuctionElixir do
-  use Xee.ThemeScript
+defmodule DoubleAuction do
+  use XeeThemeScript
   require Logger
 
   use Timex
