@@ -25,7 +25,9 @@ const BidsTable = ({ buyerBids, sellerBids, deals }) => {
     )
   }
   return (
-    <Card>
+    <Card
+      initiallyExpanded={true}
+    >
       <CardHeader
         title={
           <span>

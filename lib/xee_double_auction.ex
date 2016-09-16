@@ -14,7 +14,7 @@ defmodule DoubleAuction do
   def install, do: nil
 
   def init do
-    {:ok, %{"data" => %{
+    {:ok, %{data: %{
        mode: "wait",
        participants: %{},
        buyer_bids: [],
@@ -27,19 +27,47 @@ defmodule DoubleAuction do
      }}}
   end
 
+  def filter_data(data) do
+    rule = %{
+      mode: true,
+      participants: "users",
+      buyer_bids: "buyerBids",
+      seller_bids: "sellerBids",
+      deals: true
+    }
+    data
+    |> Map.update!(:buyer_bids, &mapelem(&1, 1))
+    |> Map.update!(:seller_bids, &mapelem(&1, 1))
+    |> Map.update!(:deals, &mapelem(&1, 0))
+    |> Transmap.transform(rule)
+  end
+
+  def filter_data(data, id) do
+    rule = %{
+      mode: true,
+      buyer_bids: "buyerBids",
+      seller_bids: "sellerBids",
+      deals: true,
+      participants: {"personal", %{
+        id => true,
+        :_spread => [[id]]
+      }},
+    }
+    data
+    |> Map.update!(:buyer_bids, &mapelem(&1, 1))
+    |> Map.update!(:seller_bids, &mapelem(&1, 1))
+    |> Map.update!(:deals, &mapelem(&1, 0))
+    |> Transmap.transform(rule)
+  end
+
   def join(%{participants: participants} = data, id) do
     if not Map.has_key?(participants, id) do
       participant = %{role: nil, bidded: false, money: nil, bid: nil, dealt: false, deal: nil}
       participants = Map.put(participants, id, participant)
-      data = %{data | participants: participants}
-      action = %{
-        type: "ADD_USER",
-        id: id,
-        user: participant
-      }
-      {:ok, %{"data" => data, "host" => %{action: action}}}
+      new = %{data | participants: participants}
+      wrap_result(data, new)
     else
-      {:ok, %{"data" => data}}
+      wrap_result(data, data)
     end
   end
 
@@ -68,21 +96,15 @@ defmodule DoubleAuction do
   end
 
   def handle_received(data, %{"action" => "start"}) do
-    {:ok, %{"data" => %{data | started: true}}}
+    wrap_result(data, %{data | started: true})
   end
 
   def handle_received(data, %{"action" => "stop"}) do
-    {:ok, %{"data" => %{data | started: false}}}
+    wrap_result(data, %{data | started: false})
   end
 
   def handle_received(data, %{"action" => "change_mode", "params" => mode}) do
-    action = %{
-      type: "CHANGE_MODE",
-      payload: mode
-    }
-    data = %{data | mode: mode}
-    {_, participant} = dispatch_to_all(data.participants, action)
-    {:ok, %{"data" => data, "host" => %{action: action}, "participant" => participant}}
+    wrap_result(data, %{data | mode: mode})
   end
 
   def handle_received(data, %{"action" => "match"}) do
@@ -108,23 +130,10 @@ defmodule DoubleAuction do
       end
       {{id, new_participant}, acc + 1}
     end) |> elem(0) |> Enum.into(%{})
-
-    host_action = %{action: %{
-      type: "UPDATE_USERS",
-      users: participants
-    }}
-    participant_actions = Enum.map(participants, fn {id, personal} ->
-      {id, %{action: %{
-         type: "UPDATE_PERSONAL",
-         personal: personal
-       }}}
-    end) |> Enum.into(%{})
-
-
-    data = %{data | participants: participants,
+    new = %{data | participants: participants,
      buyer_bids: [], seller_bids: [], deals: [],
      highest_bid: nil, lowest_bid: nil }
-    {:ok, %{"data" => data, "host" => host_action, "participant" => participant_actions}}
+    wrap_result(data, new)
   end
 
   def mapelem(list, i) do
@@ -134,34 +143,23 @@ defmodule DoubleAuction do
   def handle_received(data, %{"action" => "fetch_contents"}) do
     action = %{
       type: "RECEIVE_CONTENTS",
-      payload: %{
-        mode: data.mode,
-        users: data.participants,
-        buyerBids: mapelem(data.buyer_bids, 1),
-        sellerBids: mapelem(data.seller_bids, 1),
-        deals: mapelem(data.deals, 0)
-      }
+      payload: filter_data(data)
     }
-    {:ok, %{"data" => data, "host" => %{action: action}}}
+    {:ok, %{data: data, host: %{action: action}}}
   end
 
   def handle_received(data, %{"action" => "fetch_contents"}, id) do
     action = %{
       type: "RECEIVE_CONTENTS",
-      payload: %{
-        mode: data.mode,
-        buyerBids: mapelem(data.buyer_bids, 1),
-        sellerBids: mapelem(data.seller_bids, 1),
-        deals: mapelem(data.deals, 0),
-        personal: Map.get(data.participants, id)
-      }
+      payload: filter_data(data, id)
     }
-    {:ok, %{"data" => data, "participant" => %{id => %{action: action}}}}
+    {:ok, %{data: data, participant: %{id => %{action: action}}}}
   end
 
   def handle_received(data, %{"action" => "bid", "params" => bid}, id) do
+    old = data
     participant = Map.get(data.participants, id)
-    {data, host_action, participant_actions} = case participant do
+    data = case participant do
       # Seller
       %{role: "seller", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid >= money ->
         data = remove_first(data, id, previous_bid, :lowest_bid, :seller_bids, &set_lowest_bid/1)
@@ -179,12 +177,7 @@ defmodule DoubleAuction do
           bid(data, :highest_bid, :buyer_bids, id, bid, previous_bid, "NEW_BUYER_BIDS")
         end
     end
-
-    if not is_nil(host_action) do
-      {:ok, %{"data" => data, "host" => %{action: host_action}, "participant" => participant_actions}}
-    else
-      {:ok, %{"data" => data, "participant" => participant_actions}}
-    end
+    wrap_result(old, data)
   end
 
   def remove_first(data, id, previous_bid, bid_key, key, set) do
@@ -208,9 +201,7 @@ defmodule DoubleAuction do
     data = update_in(data, [:participants, id], fn participant ->
       %{participant | bidded: true, bid: bid}
     end)
-    host_action = %{ type: action, money: bid, previousBid: previous_bid, id: id }
-    participant_actions = bid_action_for_participants(data.participants, id, bid, previous_bid, action)
-    {data, host_action, participant_actions}
+    data
   end
 
   def deal(data, bid_key, partner_key, id, bid, previous_bid, set) do
@@ -221,62 +212,47 @@ defmodule DoubleAuction do
     data = %{data | :deals => deals, partner_key => bids}
     data = dealt(data, id, id2, bid)
 
-    host_action = %{
-      type: "DEALT",
-      id1: id, id2: id2, time: now,
-      money: bid, money2: elem(data[bid_key], 1), previousBid: previous_bid
-    }
-    participant_actions = Enum.map(data.participants, fn {p_id, _} ->
-      deal_or_dealt_action(p_id, id, id2, bid, elem(data[bid_key], 1), previous_bid)
-    end) |> Enum.into(%{})
     data = set.(data)
-    {data, host_action, participant_actions}
-  end
-
-  def bid_action_for_participants(participants, id, bid, previous_bid, action) do
-    Enum.map(participants, fn {p_id, _} ->
-      {p_id, %{
-        action: %{
-          bidded: p_id == id,
-          type: action,
-          money: bid,
-          previousBid: previous_bid
-        }
-      }}
-    end) |> Enum.into(%{})
-  end
-
-  def deal_or_dealt_action(p_id, id, id2, bid, bid2, previous_bid) do
-    if p_id == id2 or p_id == id do
-      {p_id, %{
-        action: %{
-          type: "DEALT",
-          bidded: p_id == id,
-          money: bid,
-          money2: bid2,
-          previousBid: previous_bid
-        }
-      }}
-    else
-      {p_id, %{
-        action: %{
-          type: "SOMEONE_DEALT",
-          money: bid,
-          money2: bid2,
-          previousBid: previous_bid
-        }
-      }}
-    end
+    data
   end
 
   def new_deal(bid, id, id2, now) do
     {bid, now, {id, id2}}
   end
 
-  def dispatch_to_all(participants, action) do
-    host = %{action: action}
-    participant = Enum.map(participants, fn {id, _} -> {id, %{action: action}} end)
-                  |> Enum.into(%{})
-    {host, participant}
+  def compute_diff(old, %{data: new} = result) do
+    host = Map.get(result, :host, %{})
+    participant = Map.get(result, :participant, %{})
+    participant_tasks = Enum.map(old.participants, fn {id, _} ->
+      {id, Task.async(fn -> JsonDiffEx.diff(filter_data(old, id), filter_data(new, id)) end)}
+    end)
+    host_task = Task.async(fn -> JsonDiffEx.diff(filter_data(old), filter_data(new)) end)
+    host_diff = Task.await(host_task)
+    participant_diff = Enum.map(participant_tasks, fn {id, task} -> {id, %{diff: Task.await(task)}} end)
+                        |> Enum.filter(fn {_, map} -> map_size(map.diff) != 0 end)
+                        |> Enum.into(%{})
+    host = Map.merge(host, %{diff: host_diff})
+    host = if map_size(host.diff) == 0 do
+      Map.delete(host, :diff)
+    else
+      host
+    end
+    host = if map_size(host) == 0 do
+      nil
+    else
+      host
+    end
+    participant = Map.merge(participant, participant_diff, fn _k, v1, v2 ->
+      Map.merge(v1, v2)
+    end)
+    %{data: new, host: host, participant: participant}
+  end
+
+  def wrap_result(old, {:ok, result}) do
+    {:ok, compute_diff(old, result)}
+  end
+
+  def wrap_result(old, new) do
+    {:ok, compute_diff(old, %{data: new})}
   end
 end
