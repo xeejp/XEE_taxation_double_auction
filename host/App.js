@@ -4,15 +4,14 @@ import { connect } from 'react-redux'
 import RaisedButton from 'material-ui/RaisedButton'
 import Divider from 'material-ui/Divider'
 
-import ActionDispatcher from 'components/ActionDispatcher'
-import MessageSender from 'components/MessageSender'
-import Chart from 'components/Chart'
+import Chart from '../components/Chart';
 import ModeButtons from './ModeButtons'
 import MatchingButton from './MatchingButton'
 import BidsTable from 'components/BidsTable'
 import Users from './Users'
 import ScreenMode from './ScreenMode'
 import ExperimentKey from './ExperimentKey'
+import TaxForm from './TaxForm'
 
 import { enableScreenMode } from './actions'
 
@@ -53,6 +52,15 @@ class App extends Component {
               <MatchingButton
                 style={{float: "right"}}
               />
+              <Divider
+                style={{
+                  marginTop: "5%",
+                  clear: "right"
+                }}
+              />
+              <div style={{ marginTop: "5%" }}>
+                <TaxForm />
+              </div>
               <Divider
                 style={{
                   marginTop: "5%",

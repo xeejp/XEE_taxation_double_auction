@@ -1,10 +1,12 @@
-defmodule DoubleAuction do
+defmodule TaxationDoubleAuction do
   use XeeThemeScript
   require Logger
 
   use Timex
 
   @modes ["wait", "description", "auction", "result"]
+  @tax_type ["lump_sum", "proportional", "regressive", "progressive"]
+  @tax_target ["buyer", "seller", "both"]
 
   # Callbacks
   def script_type do
@@ -15,7 +17,14 @@ defmodule DoubleAuction do
 
   def init do
     {:ok, %{data: %{
+       participants_num: 0,
        mode: "wait",
+       tax_target: "both",
+       tax_type: "proportional",
+       lump_sum_tax: 200,
+       proportional_ratio: 10,
+       regressive_ratio: 20,
+       progressive_ratio: 50,
        participants: %{},
        buyer_bids: [],
        highest_bid: nil,
@@ -29,11 +38,20 @@ defmodule DoubleAuction do
 
   def filter_data(data) do
     rule = %{
-      mode: true,
+      _default: true,
+      price_base: false,
+      highest_bid: false,
+      lowest_bid: false,
       participants: "users",
+      participants_num: "usersCount",
       buyer_bids: "buyerBids",
       seller_bids: "sellerBids",
-      deals: true
+      tax_target: "taxTarget",
+      tax_type: "taxType",
+      lump_sum_tax: "lumpSumTax",
+      proportional_ratio: "proportionalRatio",
+      regressive_ratio: "regressiveRatio",
+      progressive_ratio: "progressiveRatio",
     }
     data
     |> Map.update!(:buyer_bids, &mapelem(&1, 1))
@@ -44,14 +62,23 @@ defmodule DoubleAuction do
 
   def filter_data(data, id) do
     rule = %{
-      mode: true,
+      _default: true,
+      price_base: false,
+      highest_bid: false,
+      lowest_bid: false,
       buyer_bids: "buyerBids",
       seller_bids: "sellerBids",
-      deals: true,
+      participants_num: "usersCount",
       participants: {"personal", %{
         id => true,
         :_spread => [[id]]
       }},
+      tax_target: "taxTarget",
+      tax_type: "taxType",
+      lump_sum_tax: "lumpSumTax",
+      proportional_ratio: "proportionalRatio",
+      regressive_ratio: "regressiveRatio",
+      progressive_ratio: "progressiveRatio",
     }
     data
     |> Map.update!(:buyer_bids, &mapelem(&1, 1))
@@ -60,11 +87,11 @@ defmodule DoubleAuction do
     |> Transmap.transform(rule)
   end
 
-  def join(%{participants: participants} = data, id) do
+  def join(%{participants: participants, participants_num: participants_num} = data, id) do
     if not Map.has_key?(participants, id) do
       participant = %{role: nil, bidded: false, money: nil, bid: nil, dealt: false, deal: nil}
       participants = Map.put(participants, id, participant)
-      new = %{data | participants: participants}
+      new = %{data | participants: participants, participants_num: participants_num + 1}
       wrap_result(data, new)
     else
       wrap_result(data, data)
@@ -105,6 +132,25 @@ defmodule DoubleAuction do
 
   def handle_received(data, %{"action" => "change_mode", "params" => mode}) do
     wrap_result(data, %{data | mode: mode})
+  end
+
+  def handle_received(data, %{"action" => "change_tax_type", "params" => tax_type}) do
+    wrap_result(data, %{data | tax_type: tax_type})
+  end
+  def handle_received(data, %{"action" => "change_tax_target", "params" => tax_target}) do
+    wrap_result(data, %{data | tax_target: tax_target})
+  end
+  def handle_received(data, %{"action" => "change_lump_sum_tax", "params" => lump_sum_tax}) do
+    wrap_result(data, %{data | lump_sum_tax: lump_sum_tax})
+  end
+  def handle_received(data, %{"action" => "change_proportional_ratio", "params" => proportional_ratio}) do
+    wrap_result(data, %{data | proportional_ratio: proportional_ratio})
+  end
+  def handle_received(data, %{"action" => "change_regressive_ratio", "params" => regressive_ratio}) do
+    wrap_result(data, %{data | regressive_ratio: regressive_ratio})
+  end
+  def handle_received(data, %{"action" => "change_progressive_ratio", "params" => progressive_ratio}) do
+    wrap_result(data, %{data | progressive_ratio: progressive_ratio})
   end
 
   def handle_received(data, %{"action" => "match"}) do
