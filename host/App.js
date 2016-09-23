@@ -12,7 +12,6 @@ import MatchingButton from './MatchingButton'
 import BidsTable from 'components/BidsTable'
 import Users from './Users'
 import ScreenMode from './ScreenMode'
-import ExperimentKey from './ExperimentKey'
 
 import { enableScreenMode } from './actions'
 
@@ -47,12 +46,7 @@ class App extends Component {
           ? <ScreenMode />
           : (
             <div>
-              <ExperimentKey />
-              <Divider />
               <ModeButtons />
-              <MatchingButton
-                style={{float: "right"}}
-              />
               <Divider
                 style={{
                   marginTop: "5%",
@@ -79,8 +73,9 @@ class App extends Component {
               />
               <Chart
                 users={users}
-              />
-              <RaisedButton onClick={this.enableScreenMode.bind(this)} primary={true} style={{ marginTop: '5%' }}>スクリーンモードに移行</RaisedButton>
+              /><br />
+              <MatchingButton /><br />
+              <RaisedButton onClick={this.enableScreenMode.bind(this)} primary={true} style={{ marginTop: '3%' }}>スクリーンモードに移行</RaisedButton>
             </div>
           )
         }

@@ -25,7 +25,7 @@ const mapStateToProps = ({ users }) => ({ users })
 const Users = ({ users }) => (
   <Card>
     <CardHeader
-      title={"Users (" + Object.keys(users).length + "人)"}
+      title={"登録者 " + Object.keys(users).length + "人"}
       actAsExpander={true}
       showExpandableButton={true}
     />
