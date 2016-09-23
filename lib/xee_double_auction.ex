@@ -136,10 +136,6 @@ defmodule DoubleAuction do
     wrap_result(data, new)
   end
 
-  def mapelem(list, i) do
-    Enum.map(list, &(elem(&1, i)))
-  end
-
   def handle_received(data, %{"action" => "fetch_contents"}) do
     action = %{
       type: "RECEIVE_CONTENTS",
@@ -166,7 +162,9 @@ defmodule DoubleAuction do
         if not is_nil(data.highest_bid) and bid <= elem(data.highest_bid, 1) do
           deal(data, :highest_bid, :buyer_bids, id, bid, previous_bid, &set_highest_bid/1)
         else
-          bid(data, :lowest_bid, :seller_bids, id, bid, previous_bid, "NEW_SELLER_BIDS")
+          bid(data, :lowest_bid, :seller_bids, id, bid, previous_bid, "NEW_SELLER_BIDS", fn most_bid, bid ->
+            bid < most_bid
+          end)
         end
       # Buyer
       %{role: "buyer", bidded: bidded, bid: previous_bid, money: money, dealt: false} when not is_nil(money) and bid <= money ->
@@ -174,7 +172,9 @@ defmodule DoubleAuction do
         if not is_nil(data.lowest_bid) and bid >= elem(data.lowest_bid, 1) do
           deal(data, :lowest_bid, :seller_bids, id, bid, previous_bid, &set_lowest_bid/1)
         else
-          bid(data, :highest_bid, :buyer_bids, id, bid, previous_bid, "NEW_BUYER_BIDS")
+          bid(data, :highest_bid, :buyer_bids, id, bid, previous_bid, "NEW_BUYER_BIDS", fn most_bid, bid ->
+            bid > most_bid
+          end)
         end
     end
     wrap_result(old, data)
@@ -190,9 +190,9 @@ defmodule DoubleAuction do
     data
   end
 
-  def bid(data, bid_key, key, id, bid, previous_bid, action) do
+  def bid(data, bid_key, key, id, bid, previous_bid, action, func) do
     bids = [{id, bid} | data[key]]
-    most_bid = if is_nil(data[bid_key]) or bid > elem(data[bid_key], 1) do
+    most_bid = if is_nil(data[bid_key]) or func.(elem(data[bid_key], 1), bid) do
       {id, bid}
     else
       data[bid_key]
@@ -246,6 +246,10 @@ defmodule DoubleAuction do
       Map.merge(v1, v2)
     end)
     %{data: new, host: host, participant: participant}
+  end
+
+  def mapelem(list, i) do
+    Enum.map(list, &(elem(&1, i)))
   end
 
   def wrap_result(old, {:ok, result}) do

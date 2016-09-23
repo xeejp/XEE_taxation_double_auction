@@ -7,16 +7,22 @@ import Highcharts from 'react-highcharts'
 const Chart = ({users}) => {
   const usersCount = Object.keys(users).length
   const buyerBids = [], sellerBids = []
+  let consumerSurplus = 0
+  let producerSurplus = 0
+  let totalSurplus = 0
   for (let id of Object.keys(users)) {
     const user = users[id]
     if (user.bidded || user.dealt) {
       if (user.role == "buyer") {
+        if (user.dealt) consumerSurplus += user.money - user.deal
         buyerBids.push(user.bid)
       } else {
+        if (user.dealt) producerSurplus += user.deal - user.money
         sellerBids.push(user.bid)
       }
     }
   }
+  totalSurplus = consumerSurplus + producerSurplus
   buyerBids.push(0 - 100)
   sellerBids.push(usersCount * 100 + 100)
   return (
@@ -27,6 +33,9 @@ const Chart = ({users}) => {
         showExpandableButton={true}
       />
       <CardText expandable={true}>
+        <p>消費者余剰：{consumerSurplus}</p>
+        <p>生産者余剰：{producerSurplus}</p>
+        <p>総余剰：{totalSurplus}</p>
         <Highcharts config={{
           chart: {
             type: 'area',
