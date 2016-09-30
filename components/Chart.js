@@ -1,23 +1,36 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import throttle from 'react-throttle-render'
 
 import { Card, CardHeader, CardText } from 'material-ui/Card'
 import Highcharts from 'react-highcharts'
+import { calculateTax } from 'shared/tax'
 
-const Chart = ({users}) => {
-  const usersCount = Object.keys(users).length
+const mapStateToProps = ({
+  users, usersCount, taxTarget, taxType, lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio
+}) => ({
+  users, usersCount, taxTarget, taxType, lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio
+})
+
+const Chart = ({
+  users, usersCount, taxTarget, taxType, lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio
+}) => {
   const buyerBids = [], sellerBids = []
   let consumerSurplus = 0
   let producerSurplus = 0
   let totalSurplus = 0
   for (let id of Object.keys(users)) {
     const user = users[id]
+    const role = user.role
+    const money = user.money
     if (user.bidded || user.dealt) {
+      const tax = calculateTax(usersCount, taxTarget, taxType, lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio, role, money)
+      console.log(tax)
       if (user.role == "buyer") {
-        if (user.dealt) consumerSurplus += user.money - user.deal
+        if (user.dealt) consumerSurplus += user.money - user.deal - tax
         buyerBids.push(user.bid)
-      } else {
-        if (user.dealt) producerSurplus += user.deal - user.money
+      } else if (user.role == "seller") {
+        if (user.dealt) producerSurplus += user.deal - user.money - tax
         sellerBids.push(user.bid)
       }
     }
@@ -87,4 +100,4 @@ const Chart = ({users}) => {
   )
 }
 
-export default throttle(Chart, 200)
+export default connect(mapStateToProps)(throttle(Chart, 200))

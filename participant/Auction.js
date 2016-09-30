@@ -5,16 +5,29 @@ import Divider from 'material-ui/Divider'
 
 import BidsTable from 'components/BidsTable'
 import BidForm from './BidForm'
+import { calculateTax, applyTax } from 'shared/tax'
 
-const mapStateToProps = ( {personal, buyerBids, sellerBids, deals} ) =>
-Object.assign({}, personal, { buyerBids, sellerBids, deals })
+const mapStateToProps = ({
+  usersCount, personal, taxTarget, taxType, buyerBids, sellerBids, deals,
+  lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio
+}) => {
+  const role = personal.role
+  const money = personal.money
+  return {
+    ...personal,
+    tax: calculateTax(usersCount, taxTarget, taxType, lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio, role, money),
+    role, money, taxTarget, taxType,
+    buyerBids, sellerBids, deals,
+    lumpSumTax, proportionalRatio, regressiveRatio, progressiveRatio
+  }
+}
 
-const Buyer = ({ money, bidded, bid, dealt, deal }) => {
+const Buyer = ({ money, bidded, bid, dealt, deal, tax }) => {
   if (dealt) {
     return (
       <div>
         <p>{deal}で取引が成立しました。（あなたの提案: {bid}）</p>
-        <p>利益は{money - deal}です。</p>
+        <p>利益は{money - deal - tax}です。({money} - 取引価格{deal} - 税{tax})</p>
       </div>
     )
   } else {
@@ -32,12 +45,12 @@ const Buyer = ({ money, bidded, bid, dealt, deal }) => {
   }
 }
 
-const Seller = ({ money, bidded, bid, dealt, deal }) => {
+const Seller = ({ money, bidded, bid, dealt, deal, tax }) => {
   if (dealt) {
     return (
       <div>
         <p>{deal}で取引が成立しました。（あなたの提案: {bid}）</p>
-        <p>利益は{deal - money}です。</p>
+        <p>利益は{deal - money - tax}です。</p>
       </div>
     )
   } else {
@@ -55,11 +68,11 @@ const Seller = ({ money, bidded, bid, dealt, deal }) => {
   }
 }
 
-const Auction = ({ buyerBids, sellerBids, deals, role, money, bidded, bid, dealt, deal }) => (
+const Auction = ({ buyerBids, sellerBids, deals, role, money, bidded, bid, dealt, deal, tax }) => (
   <div>
     <h2>ダブルオークション実験</h2>
-    { role == "buyer" ? <Buyer money={money} bidded={bidded} bid={bid} dealt={dealt} deal={deal} /> : null }
-    { role == "seller" ? <Seller money={money} bidded={bidded} bid={bid} dealt={dealt} deal={deal} /> : null }
+    { role == "buyer" ? <Buyer money={money} bidded={bidded} bid={bid} dealt={dealt} deal={deal} tax={tax} /> : null }
+    { role == "seller" ? <Seller money={money} bidded={bidded} bid={bid} dealt={dealt} deal={deal} tax={tax} /> : null }
     { role == null ? <p>あなたは現在進行中のダブルオークションには参加していません。</p> : null }
     <Divider
         style={{
