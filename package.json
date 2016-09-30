@@ -5,6 +5,7 @@
   "author": "",
   "dependencies": {
     "babel-loader": "^6.2.5",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-polyfill": "^6.8.0",
     "clone": "^1.0.2",
     "combine-section-reducers": "^1.0.4",
