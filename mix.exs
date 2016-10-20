@@ -2,7 +2,7 @@ defmodule TaxationDoubleAuction.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :taxation_double_auction,
+    [app: :xee_taxation_double_auction,
      version: "0.1.0",
      build_path: "../../_build",
      config_path: "../../config/config.exs",
